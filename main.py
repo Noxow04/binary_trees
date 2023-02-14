@@ -27,6 +27,11 @@ class Tree:
         else:
             return False
 
+    def __repr__(self):
+        return f"Tree: (\troot: {self.root.value}" \
+               f"\n\t\tvalues: {self.values}" \
+               f"\n\t\tdepth: {self.depth}\t)"
+
     @property
     def delta_variant(self):
         return self.delta_tree()
@@ -233,6 +238,7 @@ def main():
     print(Tree(2) == Tree(2))
     for i in t:
         print(i)
+    print(t)
 
 
 if __name__ == "__main__":
