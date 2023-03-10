@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Self, Union
+from typing import Self, Union, Iterator
 
 
 class Tree:
@@ -9,16 +9,16 @@ class Tree:
         left: Union[Self, None] = None
         right: Union[Self, None] = None
 
-    def __init__(self, root_value: Union[int, None] = None, allow_duplicates: bool = False):
-        self._root: Self.Node = Tree.Node(root_value) if root_value else None
-        self._allow_duplicates: bool = allow_duplicates
-        self._depth: Union[int, None] = None
-        self._values: list = []
+    def __init__(self, root_value: Union[int, None] = None, allow_duplicates: bool = False) -> None:
+        self.__root: Self.Node = Tree.Node(root_value) if root_value else None
+        self.__allow_duplicates: bool = allow_duplicates
+        self.__depth: Union[int, None] = None
+        self.__values: list = []
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[self.Node]:
         return self._browse()
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if isinstance(other, Tree):
             for self_node, other_node in zip(self, other):
                 if self_node != other_node:
@@ -27,40 +27,43 @@ class Tree:
         else:
             return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Tree: (\troot: {self.root.value}" \
                f"\n\t\tvalues: {self.values}" \
                f"\n\t\tdepth: {self.depth}\t)"
 
+    def __hash__(self) -> int:
+        return hash(tuple(values)+(root))
+
     @property
-    def delta_variant(self):
+    def delta_variant(self) -> Self:
         return self.delta_tree()
 
     @property
-    def allow_duplicates(self):
-        return self._allow_duplicates
+    def allow_duplicates(self) -> bool:
+        return self.__allow_duplicates
 
     @property
-    def root(self):
-        return self._root
+    def root(self) -> self.Node:
+        return self.__root
 
     @property
-    def depth(self):
+    def depth(self) -> int:
         return self.calculate_depth()
 
     @property
-    def values(self):
-        return self._values
+    def values(self) -> list:
+        return self.__values
 
     @root.setter
-    def root(self, value: int):
+    def root(self, value: int) -> self.Node:
         if not self._root:
-            self._root = Tree.Node(value)
-            self._values.append(value)
+            self.__root = Tree.Node(value)
+            self.__values.append(value)
         else:
             raise SyntaxError("Root has already been set for this tree !")
 
-    def _browse(self, node: Union[Node, None] = None):
+    def _browse(self, node: Union[Node, None] = None) -> Iterator[self.Node]:
         if not node:
             if self.root:
                 node = self.root
@@ -74,12 +77,12 @@ class Tree:
             for elt in self._browse(node.right):
                 yield elt
 
-    def replace_root(self, new_root: Union[Node, int]):
+    def replace_root(self, new_root: Union[Node, int]) -> None:
         if isinstance(new_root, Tree.Node):
-            self._root = new_root
+            self.__root = new_root
         else:
             self._root = Tree.Node(new_root)
-        self._values.append(new_root.value)
+        self.__values.append(new_root.value)
 
     def find(self, value: int, node: Union[Node, None] = None) -> bool:
         if not node:
@@ -119,7 +122,7 @@ class Tree:
         else:
             return int(self.find(value))
 
-    def add_node(self, value: int, node: Union[Node, None] = None):
+    def add_node(self, value: int, node: Union[Node, None] = None) -> None:
         if not node:
             if not self.root:
                 self.root = value
@@ -132,22 +135,22 @@ class Tree:
                 self.add_node(value, node.left)
             else:
                 node.left = Tree.Node(value)
-                self._values.append(value)
+                self.__values.append(value)
         else:
             if node.right:
                 self.add_node(value, node.right)
             else:
                 node.right = Tree.Node(value)
-                self._values.append(value)
+                self.__values.append(value)
 
-    def insert_values(self, *values: int):
+    def insert_values(self, *values: int) -> None:
         if not self.root:
             self.root = values[0]
             values = values[1:]
         for elt in values:
             self.add_node(elt)
 
-    def delta_tree(self):
+    def delta_tree(self) -> Self:
         delta_tree = self.copy()
         root_value = delta_tree.root.value
         for elt in delta_tree:
@@ -155,13 +158,13 @@ class Tree:
                 elt.value -= root_value
         return delta_tree
 
-    def copy(self):
+    def copy(self) -> Self:
         tree_duplicate = Tree(allow_duplicates=self.allow_duplicates)
         for elt in self:
             tree_duplicate.add_node(elt.value)
         return tree_duplicate
 
-    def as_list(self, node: Union[Node, None] = None):
+    def as_list(self, node: Union[Node, None] = None) -> list:
         if not node:
             node = self.root
         return [node.value,
@@ -186,7 +189,7 @@ class Tree:
                 return max(self.calculate_depth(node.left, include_root_in_depth),
                            self.calculate_depth(node.right, include_root_in_depth)) + 1
 
-    def optimize(self, keep_root: bool = False):
+    def optimize(self, keep_root: bool = False) -> None:
         if keep_root:
             optimized_tree = Tree(root_value=self.root.value)
             values = self.values[1:]
@@ -197,7 +200,9 @@ class Tree:
             root = values.pop(len(values) // 2)
             optimized_tree = Tree(root_value=root)
         Tree._sorted_insert(values, optimized_tree.root)
+        old_root = self.root
         self.replace_root(optimized_tree.root)
+        del old_root
 
     @classmethod
     def build_from_values(cls, root_value: int, *values: int, allow_duplicates: bool = False) -> Self:
@@ -207,7 +212,7 @@ class Tree:
         return tree
 
     @staticmethod
-    def _sorted_insert(values: list, node: Node):
+    def _sorted_insert(values: list, node: Node) -> None:
         half_index = len(values) // 2
         left_half, right_half = values[:half_index], values[half_index:]
         if left_half:
