@@ -49,6 +49,10 @@ class TestTree(unittest.TestCase):
         t.replace_root(Tree.Node(2))
         self.assertEqual(t.root, Tree.Node(2))
 
+    def test_iter():
+        tree = Tree.build_from_values(1,2,4,5,8,7,6,allow_duplicates=True)
+        for elt, E in zip(tree._browse(),tree):
+            self.assertEqual(elt,E)
 
 if __name__ == '__main__':
     unittest.main()
